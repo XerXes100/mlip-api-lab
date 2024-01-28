@@ -2,16 +2,15 @@ from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
 from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
 import time
+import os
 
-endpoint = "ENTER ENDPOINT HERE"
-key = "ENTER KEY HERE"
+endpoint = os.environ["ENDPOINT"]
+key = os.environ["KEY"]
 
 credentials = CognitiveServicesCredentials(key)
 
-client = ComputerVisionClient(
-    endpoint=endpoint,
-    credentials=credentials
-)
+client = ComputerVisionClient(endpoint=endpoint, credentials=credentials)
+
 
 def read_image(uri):
     numberOfCharsInOperationId = 36
@@ -27,23 +26,25 @@ def read_image(uri):
 
     # SDK call
     result = client.get_read_result(operationId)
-    
+
     # Try API
     retry = 0
-    
+
     while retry < maxRetries:
-        if result.status.lower () not in ['notstarted', 'running']:
+        if result.status.lower() not in ["notstarted", "running"]:
             break
         time.sleep(1)
         result = client.get_read_result(operationId)
-        
+
         retry += 1
-    
+
     if retry == maxRetries:
         return "max retries reached"
 
     if result.status == OperationStatusCodes.succeeded:
-        res_text = " ".join([line.text for line in result.analyze_result.read_results[0].lines])
+        res_text = " ".join(
+            [line.text for line in result.analyze_result.read_results[0].lines]
+        )
         return res_text
     else:
         return "error"
